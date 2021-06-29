@@ -1,0 +1,10 @@
+name: ToolDurabilityAssist
+version: 1.1
+author: MrTransistor
+main: ru.tulavcube.ToolDurabilityAssist.ToolDurabilityAssist
+commands:
+  tooldurabilityassist:
+    aliases: [tda]
+    description: Configure the plugin
+    usage: "Usage: /tooldurabilityassist|tda <percentage> [value]"
+api-version: 1.17
