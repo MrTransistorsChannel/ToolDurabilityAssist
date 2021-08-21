@@ -1,23 +1,21 @@
 package ru.tulavcube.ToolDurabilityAssist;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import ru.tulavcube.ToolDurabilityAssist.commands.tooldurabilityassist;
 
-import java.util.ArrayList;
-
-public class ToolDurabilityAssist extends JavaPlugin {
+public class ToolDurabilityAssist extends JavaPlugin implements Listener {
 
     private int _percent;
-    private final ArrayList<String> playerList = new ArrayList<>();
-    private BukkitTask _runnable;
 
     @Override
     public void onEnable() {
+        super.onEnable();
         getLogger().info("ToolDurabilityAssist plugin started");
         saveDefaultConfig();
         updateSettings();
@@ -25,37 +23,45 @@ public class ToolDurabilityAssist extends JavaPlugin {
         getCommand("tooldurabilityassist").setExecutor(new tooldurabilityassist(this));
         getCommand("tooldurabilityassist").setTabCompleter(new tooldurabilityassist(this));
 
-        _runnable = new BukkitRunnable(){
-            @Override
-            public void run() {
-                for(Player player : getServer().getOnlinePlayers()){
-                    ItemStack item = player.getInventory().getItemInMainHand();
-                    int maxDurability= item.getType().getMaxDurability();
-                    if(item.getItemMeta() instanceof Damageable) {
-                        float durability = ((Damageable) item.getItemMeta()).getDamage();
-                        if (((maxDurability - durability) / maxDurability * 100) < _percent) {
-                            if(!playerList.contains(player.getName())) {
-                                player.sendTitle("Tool durability low", null, 10, 60, 10);
-                                player.playSound(player.getLocation(), "block.chest.open", 1, 2F);
-                                playerList.add(player.getName());
-                            }
-                        }
-                        else playerList.remove(player.getName());
-                    }
-                    else playerList.remove(player.getName());
-                }
-            }
-        }.runTaskTimer(this, 0, 40);
+        getServer().getPluginManager().registerEvents(this, this);
     }
 
     @Override
     public void onDisable() {
-        _runnable.cancel();
+        super.onDisable();
         getLogger().info("ToolDurabilityAssist plugin stopped");
     }
 
-    public void updateSettings(){
+    @EventHandler
+    private void onItemDamage(PlayerItemDamageEvent e) {
+        Player player = e.getPlayer();
+        ItemStack damagedItem = e.getItem();
+
+        if (checkDurability(damagedItem, _percent)) return;
+
+        String customName = damagedItem.getItemMeta().getDisplayName();
+        String itemName;
+        if (customName.isBlank()) {
+            itemName = damagedItem.getType().toString().replace('_', ' ').toLowerCase();
+            itemName = itemName.substring(0, 1).toUpperCase() + itemName.substring(1);
+        } else itemName = customName;
+
+        player.sendTitle(" ", itemName + " durability is low", 10, 60, 10);
+        player.playSound(player.getLocation(), "block.chest.open", 1, 2F);
+
+    }
+
+    public void updateSettings() {
         _percent = getConfig().getInt("percentage");
+    }
+
+    private boolean checkDurability(ItemStack item, float percentDamage) {
+        if (item != null && item.getItemMeta() instanceof Damageable) {
+            int maxDurability = item.getType().getMaxDurability();
+            int damage = ((Damageable) item.getItemMeta()).getDamage();
+            return !((float) (maxDurability - damage) / maxDurability * 100 < percentDamage);
+        }
+        return true;
     }
 
 }
