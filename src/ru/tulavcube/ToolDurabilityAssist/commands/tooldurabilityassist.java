@@ -32,7 +32,6 @@ public class tooldurabilityassist implements TabExecutor {
                 sender.sendMessage(ChatColor.DARK_GREEN + "Current durability threshold is set to "
                         + _plg.getConfig().getInt("percentage") + "%");
             } else {
-                _plg.getLogger().info(Integer.toString(args.length));
                 return false;
             }
         }
