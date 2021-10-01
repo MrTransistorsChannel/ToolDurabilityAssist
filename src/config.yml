@@ -1,1 +1,4 @@
-percentage: 20
+warning: 10
+critical: 20
+
+config-version: 2
